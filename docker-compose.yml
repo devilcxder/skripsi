@@ -5,7 +5,7 @@ services:
     build:
       context: '.'
       args:
-        uid: ${UID}
+        uid: 1000
     container_name: laravel-app
     environment:
       - APACHE_RUN_USER=#${UID}
