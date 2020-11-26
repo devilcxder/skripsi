@@ -8,12 +8,12 @@ use Sastrawi\StopWordRemover\StopWordRemoverFactory;
 class PreprocessingService
 {
     public static function index($text)
-    {
+    {        
         //PREPROCESSING
         $stemmerFactory = new StemmerFactory();
         $stopWordFactory = new StopWordRemoverFactory();
         $stemmer  = $stemmerFactory->createStemmer();
-        $stopword = $stopWordFactory->createStopWordRemover();
+        $stopword = $stopWordFactory->createStopWordRemover();        
 
         //REMOVE URL # @
         $regex = "/\b((https?|ftp|file):\/\/|www\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/i";

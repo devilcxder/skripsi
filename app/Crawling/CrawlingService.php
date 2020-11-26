@@ -24,10 +24,12 @@ class CrawlingService
 
                     //save to array
                     $tweetsAfterPrepo[] = ['id_tweet' => $tweet['id_str'], 'tweet' => $text, 'prepro_tweet' => $result];
-                    Tweet::insert($tweetsAfterPrepo);
-                    event(new TweetSave());
+                    dump($text);
+                    // Tweet::insert($tweetsAfterPrepo);
+                    // event(new TweetSave());
                 }
-            })            
+            })
+            ->setlocale('in')            
             ->startListening();
         // $tweets = Twitter::getSearch(['q' => $keyword . ' -RT', 'tweet_mode' => 'extended', 'lang' => 'id', 'count' => $count, 'format' => 'array']);
 
