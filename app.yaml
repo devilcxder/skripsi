@@ -1,4 +1,4 @@
-runtime: php73  # language of the app
+runtime: php  # language of the app
 env: flex     # let app engine know we use flexible environment
 
 runtime_config:
