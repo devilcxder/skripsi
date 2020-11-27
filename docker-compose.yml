@@ -7,11 +7,10 @@ services:
         uid: ${UID}
     container_name: laravel-app
     depends_on:
-      - cloud-sql-proxy
+      - mysql
     environment:
       - APACHE_RUN_USER=#${UID}
       - APACHE_RUN_GROUP=#${UID}
-      DATABASE_URL: mysql://root:@cloud-sql-proxy:3306/skripsi
     volumes:
       - .:/var/www/html
     ports:
@@ -20,19 +19,20 @@ services:
       backend:
         aliases:
           - laravel-app
-  
-  cloud-sql-proxy:
-    image: gcr.io/cloudsql-docker/gce-proxy:1.11
-    # Port: MySQL (3306), PostgreSQL (5433)
-    command: /cloud_sql_proxy -instances=rugged-choir-296703:asia-southeast1:skripsi=tcp:0.0.0.0:3306
+
+  mysql:
+    image: mysql:5.7
+    container_name: skripsi-mysql
     volumes:
-    # this mounts your application default credential on the container, preventing the
-    # 'invalid json file "/config": google: read JWT from JSON credentials: 'type' field is "authorized_user" (expected "service_account")'
-    # error if you point to the actual credential file directly
-    - ~/.config:/root/.config
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     ports:
-    - 3306:3306
+      - "3306"
 
 networks:
   backend:
-    name: backend-network 
+    name: backend-network
