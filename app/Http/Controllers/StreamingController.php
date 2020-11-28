@@ -15,8 +15,7 @@ class StreamingController extends Controller
                     dd($tweet);
                 }                
                 // echo "{$tweet['user']['screen_name']} tweeted {$tweet['text']}";
-            })
-            ->setLocale('in')
+            })            
             ->startListening();
     }
 }
