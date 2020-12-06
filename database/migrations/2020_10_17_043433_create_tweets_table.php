@@ -17,6 +17,7 @@ class CreateTweetsTable extends Migration
         Schema::create('tweets', function (Blueprint $table) {
             $table->id();
             $table->string('id_tweet');
+            $table->string('user');
             $table->text('tweet');
             $table->text('prepro_tweet');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

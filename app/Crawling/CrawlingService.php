@@ -3,6 +3,7 @@
 namespace App\Crawling;
 
 use App\Events\TweetSave;
+use App\Jobs\TweetJob;
 use App\Models\Tweet;
 use App\Preprocessing\PreprocessingService;
 use Thujohn\Twitter\Facades\Twitter;
@@ -13,23 +14,17 @@ class CrawlingService
     public static function index($keyword, $count)
     {
         TwitterStreamingApi::publicStream()
-            ->whenHears('#COVID19', function (array $tweet) {
+            ->whenHears(['#COVID19','covid','corona'], function (array $tweet) {
                 if (!isset($tweet['retweeted_status'])) {
                     if (isset($tweet['extended_tweet'])) {
                         $text = $tweet['extended_tweet']['full_text'];
                     } else {
                         $text = $tweet['text'];
-                    }                    
-                    $result = PreprocessingService::index($text);
-
-                    //save to array
-                    $tweetsAfterPrepo[] = ['id_tweet' => $tweet['id_str'], 'tweet' => $text, 'prepro_tweet' => $result];
-                    dump($text);
-                    // Tweet::insert($tweetsAfterPrepo);
-                    // event(new TweetSave());
+                    }                         
+                    dispatch(new TweetJob($tweet, $text));
                 }
-            })
-            ->setlocale('in')            
+            })       
+            ->setlocale('in')     
             ->startListening();
         // $tweets = Twitter::getSearch(['q' => $keyword . ' -RT', 'tweet_mode' => 'extended', 'lang' => 'id', 'count' => $count, 'format' => 'array']);
 
