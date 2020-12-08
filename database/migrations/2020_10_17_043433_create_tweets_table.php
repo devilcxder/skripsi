@@ -20,8 +20,7 @@ class CreateTweetsTable extends Migration
             $table->string('user');
             $table->text('tweet');
             $table->text('prepro_tweet');
-            $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
-            $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
+            $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));            
         });
     }
 

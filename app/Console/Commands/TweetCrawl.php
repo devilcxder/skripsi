@@ -3,11 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Crawling\CrawlingService;
-use App\Models\Test;
 use Illuminate\Console\Command;
-use Thujohn\Twitter\Facades\Twitter;
-use Sastrawi\Stemmer\StemmerFactory;
-use Sastrawi\StopWordRemover\StopWordRemoverFactory;
 
 class TweetCrawl extends Command
 {
@@ -42,6 +38,6 @@ class TweetCrawl extends Command
      */
     public function handle()
     {        
-        CrawlingService::index('COVID-19',10);
+        CrawlingService::index('COVID',100);
     }
 }

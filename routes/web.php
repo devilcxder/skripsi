@@ -4,8 +4,16 @@ use App\Http\Controllers\PusherController;
 use App\Http\Controllers\StreamingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
-use App\Preprocessing\PreprocessingService;
+use App\Http\Controllers\TextMiningController;
+use App\Http\Controllers\UploadTrainingController;
 use Illuminate\Support\Facades\Auth;
+use Rubix\ML\Classifiers\GaussianNB;
+use Rubix\ML\Datasets\Labeled;
+use Rubix\ML\PersistentModel;
+use Rubix\ML\Persisters\Filesystem;
+use Rubix\ML\Pipeline;
+use Rubix\ML\Transformers\TfIdfTransformer;
+use Rubix\ML\Transformers\WordCountVectorizer;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,19 +26,49 @@ use Illuminate\Support\Facades\Auth;
 |
 */
 
-Route::get('/', function () {	
-    return view('welcome');
+Route::get('/', function () {
+	return view('welcome');
 });
 
 Route::get('/test', [TestController::class, 'index']);
-Route::get('/stream', [StreamingController::class,'index']);
+Route::get('/stream', [StreamingController::class, 'index']);
 
 Route::get('/cek', function () {
-    $text = 'Bosan dan jenuh dirumah menunggu vaksin covid';
-    echo PreprocessingService::index($text);
+	$samples = [["pingin keluar rumah takut covid"], ["khawatir bakal gelombang covid lanjut"], ["alhamdulillah banyak sembuh covid"], ["syukur banget bapak ibu negatif covid"]];
+
+	$labels = ["takut", "takut", "senang", "senang"];
+
+	$dataset = Labeled::build($samples, $labels);	
+	$folds = $dataset->fold(4);	
+
+	$estimator = new PersistentModel(
+		new Pipeline([
+			new WordCountVectorizer(),
+			new TfIdfTransformer(),
+		], new GaussianNB()),
+		new Filesystem(storage_path() .'/model/baru.model', true)
+	);		
+	$estimator->train($folds[0]);	
+	$estimator->partial($folds[1]);	
+	$estimator->partial($folds[2]);	
+	$estimator->partial($folds[3]);	
+	$estimator->save();
+	// dump($estimator);
+	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
+	dd($prediction);
 });
 
-Route::get('/pusher',[PusherController::class,'index']);
+Route::get('/cek2', function(){
+	$estimator = PersistentModel::load(new Filesystem(storage_path() .'/model/test.model'));
+	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
+	dd($prediction);
+});
+
+Route::get('/upload', [UploadTrainingController::class, 'index'])->name('upload.training.view');
+Route::post('/upload',[UploadTrainingController::class, 'import'])->name('upload.training.create');
+
+Route::get('/text-mining', [TextMiningController::class, 'index']);
+Route::post('/text-mining', [TextMiningController::class, 'createModel'])->name('create.model');
 
 Auth::routes();
 
