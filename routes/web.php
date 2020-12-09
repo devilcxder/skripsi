@@ -7,6 +7,7 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\TextMiningController;
 use App\Http\Controllers\UploadTrainingController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Rubix\ML\Classifiers\GaussianNB;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\PersistentModel;
@@ -34,38 +35,48 @@ Route::get('/test', [TestController::class, 'index']);
 Route::get('/stream', [StreamingController::class, 'index']);
 
 Route::get('/cek', function () {
+	try {
+		DB::connection()->getPdo();
+		if (DB::connection()->getDatabaseName()) {
+			echo "Yes! Successfully connected to the DB: " . DB::connection()->getDatabaseName();
+		} else {
+			die("Could not find the database. Please check your configuration.");
+		}
+	} catch (\Exception $e) {
+		die("Could not open connection to database server.  Please check your configuration.");
+	}
 	$samples = [["pingin keluar rumah takut covid"], ["khawatir bakal gelombang covid lanjut"], ["alhamdulillah banyak sembuh covid"], ["syukur banget bapak ibu negatif covid"]];
 
 	$labels = ["takut", "takut", "senang", "senang"];
 
-	$dataset = Labeled::build($samples, $labels);	
-	$folds = $dataset->fold(4);	
+	$dataset = Labeled::build($samples, $labels);
+	$folds = $dataset->fold(4);
 
 	$estimator = new PersistentModel(
 		new Pipeline([
 			new WordCountVectorizer(),
 			new TfIdfTransformer(),
 		], new GaussianNB()),
-		new Filesystem(storage_path() .'/model/baru.model', true)
-	);		
-	$estimator->train($folds[0]);	
-	$estimator->partial($folds[1]);	
-	$estimator->partial($folds[2]);	
-	$estimator->partial($folds[3]);	
+		new Filesystem(storage_path() . '/model/baru.model', true)
+	);
+	$estimator->train($folds[0]);
+	$estimator->partial($folds[1]);
+	$estimator->partial($folds[2]);
+	$estimator->partial($folds[3]);
 	$estimator->save();
 	// dump($estimator);
 	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
 	dd($prediction);
 });
 
-Route::get('/cek2', function(){
-	$estimator = PersistentModel::load(new Filesystem(storage_path() .'/model/test.model'));
+Route::get('/cek2', function () {
+	$estimator = PersistentModel::load(new Filesystem(storage_path() . '/model/test.model'));
 	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
 	dd($prediction);
 });
 
 Route::get('/upload', [UploadTrainingController::class, 'index'])->name('upload.training.view');
-Route::post('/upload',[UploadTrainingController::class, 'import'])->name('upload.training.create');
+Route::post('/upload', [UploadTrainingController::class, 'import'])->name('upload.training.create');
 
 Route::get('/text-mining', [TextMiningController::class, 'index']);
 Route::post('/text-mining', [TextMiningController::class, 'createModel'])->name('create.model');
