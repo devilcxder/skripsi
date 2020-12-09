@@ -7,6 +7,7 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\TextMiningController;
 use App\Http\Controllers\UploadTrainingController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Rubix\ML\Classifiers\GaussianNB;
 use Rubix\ML\Datasets\Labeled;
@@ -34,17 +35,7 @@ Route::get('/', function () {
 Route::get('/test', [TestController::class, 'index']);
 Route::get('/stream', [StreamingController::class, 'index']);
 
-Route::get('/cek', function () {
-	try {
-		DB::connection()->getPdo();
-		if (DB::connection()->getDatabaseName()) {
-			echo "Yes! Successfully connected to the DB: " . DB::connection()->getDatabaseName();
-		} else {
-			die("Could not find the database. Please check your configuration.");
-		}
-	} catch (\Exception $e) {
-		die("Could not open connection to database server.  Please check your configuration.");
-	}
+Route::get('/cek', function () {		
 	$samples = [["pingin keluar rumah takut covid"], ["khawatir bakal gelombang covid lanjut"], ["alhamdulillah banyak sembuh covid"], ["syukur banget bapak ibu negatif covid"]];
 
 	$labels = ["takut", "takut", "senang", "senang"];
