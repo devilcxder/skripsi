@@ -14,9 +14,9 @@
     <div class="col-lg-4">
       <div class="card card-chart">
         <div class="card-header">
-          <h5 class="card-category">Global Sales</h5>
-          <h4 class="card-title">Shipped Products</h4>
-          <div class="dropdown">
+          <h5 class="card-category">Data Training</h5>
+          <h4 class="card-title">Upload Data</h4>
+          <!-- <div class="dropdown">
             <button type="button" class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" data-toggle="dropdown">
               <i class="now-ui-icons loader_gear"></i>
             </button>
@@ -26,11 +26,29 @@
               <a class="dropdown-item" href="#">Something else here</a>
               <a class="dropdown-item text-danger" href="#">Remove Data</a>
             </div>
-          </div>
+          </div> -->
         </div>
         <div class="card-body">
-          <div class="chart-area">
-            <canvas id="lineChartExample"></canvas>
+          @if ($errors->any())
+          <div class="alert alert-danger">
+            <ul>
+              @foreach ($errors->all() as $error)
+              <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+          @endif
+          @if (session('status'))
+          <div class="alert alert-success">
+            {{ session('status') }}
+          </div>
+          @endif
+          <div class="m-4 text-center">
+            <form action="{{ route('upload.data.training') }}" method="POST" enctype="multipart/form-data">
+              @csrf
+              <input type="file" class="form-control-file" name="train">
+              <button class="btn btn-fill btn-primary">Upload</button>
+            </form>
           </div>
         </div>
         <div class="card-footer">
@@ -43,24 +61,34 @@
     <div class="col-lg-4 col-md-6">
       <div class="card card-chart">
         <div class="card-header">
-          <h5 class="card-category">2018 Sales</h5>
-          <h4 class="card-title">All products</h4>
-          <div class="dropdown">
-            <button type="button" class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" data-toggle="dropdown">
-              <i class="now-ui-icons loader_gear"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-right">
-              <a class="dropdown-item" href="#">Action</a>
-              <a class="dropdown-item" href="#">Another action</a>
-              <a class="dropdown-item" href="#">Something else here</a>
-              <a class="dropdown-item text-danger" href="#">Remove Data</a>
-            </div>
-          </div>
+          <h5 class="card-category">Model</h5>
+          <h4 class="card-title">Buat Model</h4>
         </div>
         <div class="card-body">
-          <div class="chart-area">
-            <canvas id="lineChartExampleWithNumbersAndGrid"></canvas>
+          @if (session('model'))
+          <div class="alert alert-success">
+            {{ session('model') }}
           </div>
+          @endif
+          <form action="{{ route('create.model') }}" method="POST">
+            @csrf
+            <div class="form-group">
+              <label for="model">Nama Model</label>
+              <input type="text" id="model" value="" placeholder="" name="model" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="slider">Example Range input</label>
+              <div class="row">
+                <div class="col-sm-10">
+                  <input type="range" min="0" max="100" name="split" class="form-control-range" id="slider">
+                </div>
+                <label class="slider">0%</label>
+              </div>
+            </div>
+            <div class="text-center">
+              <button class="btn btn-fill btn-primary">Buat Model</button>
+            </div>
+          </form>
         </div>
         <div class="card-footer">
           <div class="stats">
@@ -72,13 +100,33 @@
     <div class="col-lg-4 col-md-6">
       <div class="card card-chart">
         <div class="card-header">
-          <h5 class="card-category">Email Statistics</h5>
-          <h4 class="card-title">24 Hours Performance</h4>
+          <h5 class="card-category">Prediksi Emosi</h5>
+          <h4 class="card-title">Emosi</h4>
         </div>
         <div class="card-body">
-          <div class="chart-area">
-            <canvas id="barChartSimpleGradientsNumbers"></canvas>
+          @if (session('prediction'))
+          <div class="alert alert-success">
+            {{ session('prediction') }}
           </div>
+          @endif
+          <form action="{{ route('predict') }}" method="POST">
+            @csrf
+            <div class="form-group">
+              <label for="tweet">Contoh Tweet</label>
+              <input type="text" id="tweet" value="" placeholder="" name="tweet" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="model">Model</label>
+              <select class="form-control" name="model">
+                @foreach($models as $model):
+                <option value="{{ $model->model }}">{{ $model->model }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="text-center">
+              <button class="btn btn-fill btn-primary">Prediksi</button>
+            </div>
+          </form>
         </div>
         <div class="card-footer">
           <div class="stats">
@@ -277,6 +325,11 @@
 <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
 <script>
   $(document).ready(function() {
+    //Slider
+    $("#slider").on("input", function() {
+      $(".slider").html($(this).val() + '%');
+    });
+
     // Javascript method's body can be found in assets/js/demos.js    
     var ctx = document.getElementById('realtime').getContext("2d");
     var gradientStroke = ctx.createLinearGradient(500, 0, 100, 0);
@@ -292,37 +345,38 @@
       data: {
         labels: ["2013", "2014"],
         datasets: [{
-          label: "Data",
-          borderColor: "#FFFFFF",
-          pointBorderColor: "#FFFFFF",
-          pointBackgroundColor: "#1e3d60",
-          pointHoverBackgroundColor: "#1e3d60",
-          pointHoverBorderColor: "#FFFFFF",
-          pointBorderWidth: 1,
-          pointHoverRadius: 7,
-          pointHoverBorderWidth: 2,
-          pointRadius: 5,
-          fill: true,
-          backgroundColor: gradientFill,
-          borderWidth: 2,
-          data: [50, 150]
-        },
-        {
-          label: "Data",
-          borderColor: "#FFFFFF",
-          pointBorderColor: "#FFFFFF",
-          pointBackgroundColor: "#1e3d60",
-          pointHoverBackgroundColor: "#1e3d60",
-          pointHoverBorderColor: "#FFFFFF",
-          pointBorderWidth: 1,
-          pointHoverRadius: 7,
-          pointHoverBorderWidth: 2,
-          pointRadius: 5,
-          fill: true,
-          backgroundColor: gradientFill,
-          borderWidth: 2,
-          data: [100, 150]
-        }]
+            label: "Senang",
+            borderColor: "#FFFFFF",
+            pointBorderColor: "#FFFFFF",
+            pointBackgroundColor: "#1e3d60",
+            pointHoverBackgroundColor: "#1e3d60",
+            pointHoverBorderColor: "#FFFFFF",
+            pointBorderWidth: 1,
+            pointHoverRadius: 7,
+            pointHoverBorderWidth: 2,
+            pointRadius: 5,
+            fill: true,
+            backgroundColor: gradientFill,
+            borderWidth: 2,
+            data: [50, 150]
+          },
+          {
+            label: "Sedih",
+            borderColor: "#FFFFFF",
+            pointBorderColor: "#FFFFFF",
+            pointBackgroundColor: "#1e3d60",
+            pointHoverBackgroundColor: "#1e3d60",
+            pointHoverBorderColor: "#FFFFFF",
+            pointBorderWidth: 1,
+            pointHoverRadius: 7,
+            pointHoverBorderWidth: 2,
+            pointRadius: 5,
+            fill: true,
+            backgroundColor: gradientFill,
+            borderWidth: 2,
+            data: [100, 150]
+          }
+        ]
       },
       options: {
         layout: {
@@ -376,7 +430,12 @@
             ticks: {
               padding: 10,
               fontColor: "rgba(255,255,255,0.4)",
-              fontStyle: "bold"
+              fontStyle: "bold",
+              autoSkip: true,
+              source: 'labels',
+              callback: function(tick, index, array) {
+                return (index % 3) ? "" : tick;
+              }
             }
           }]
         }
@@ -389,8 +448,8 @@
       forceTLS: true
     });
     const channel = pusher.subscribe('price-btcusd');
-    channel.bind('new-price', data => {            
-      chart.data.labels.push(year++);      
+    channel.bind('new-price', data => {
+      chart.data.labels.push(year++);
       chart.data.datasets[0].data.push(data.value[0]);
       chart.data.datasets[1].data.push(data.value[1]);
       chart.update();

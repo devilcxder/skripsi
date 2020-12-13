@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Tweet extends Model
+class Emotion extends Model
 {
-    public $timestamps = false;
     use HasFactory;
+    public $timestamps = false;
 
-    public function emotion()
+    public function tweet()
     {
-        return $this->hasOne(Emotion::class);
+        return $this->belongsTo(Tweet::class);
     }
 }

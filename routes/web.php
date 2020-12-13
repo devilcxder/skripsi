@@ -1,14 +1,16 @@
 <?php
 
-use App\Http\Controllers\PusherController;
-use App\Http\Controllers\StreamingController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ModelController;
+use App\Http\Controllers\PredictController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TestController;
-use App\Http\Controllers\TextMiningController;
 use App\Http\Controllers\UploadTrainingController;
+use App\Models\Train;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Rubix\ML\Classifiers\GaussianNB;
+use Rubix\ML\CrossValidation\Reports\AggregateReport;
+use Rubix\ML\CrossValidation\Reports\ConfusionMatrix;
+use Rubix\ML\CrossValidation\Reports\MulticlassBreakdown;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\PersistentModel;
 use Rubix\ML\Persisters\Filesystem;
@@ -27,63 +29,57 @@ use Rubix\ML\Transformers\WordCountVectorizer;
 |
 */
 
-Route::get('/', function () {
-	return view('welcome');
-});
+Route::get('/', [HomeController::class, 'index']);
 
-Route::get('/test', [TestController::class, 'index']);
-Route::get('/stream', [StreamingController::class, 'index']);
+Route::post('/upload-data-training', [UploadTrainingController::class, 'import'])->name('upload.data.training');
+
+Route::post('/create-model', [ModelController::class, 'create'])->name('create.model');
+
+Route::post('/predict', [PredictController::class, 'index'])->name('predict');
+
 
 Route::get('/cek', function () {
-	try {
-		DB::connection()->getPdo();
-		if (DB::connection()->getDatabaseName()) {
-			echo "Yes! Successfully connected to the DB: " . DB::connection()->getDatabaseName();
-		} else {
-			die("Could not find the database. Please check your configuration.");
-		}
-	} catch (\Exception $e) {
-		die("Could not open connection to database server.  Please check your configuration.");
+	$samples = $labels = [];
+	$data = Train::select('prepro_train', 'sentiment')->get();	
+	foreach ($data as $train) {
+		$samples[] = [$train->prepro_train];
+		$labels[] = $train->sentiment;
 	}
-	$samples = [["pingin keluar rumah takut covid"], ["khawatir bakal gelombang covid lanjut"], ["alhamdulillah banyak sembuh covid"], ["syukur banget bapak ibu negatif covid"]];
-
-	$labels = ["takut", "takut", "senang", "senang"];
-
 	$dataset = Labeled::build($samples, $labels);
-	$folds = $dataset->fold(4);
-
+	[$training, $testing] = $dataset->stratifiedSplit(0.7);
+	// $folds = $training->fold(count($labels) / 100);
 	$estimator = new PersistentModel(
-		new Pipeline([
-			new WordCountVectorizer(),
-			new TfIdfTransformer(),
-		], new GaussianNB()),
-		new Filesystem(storage_path() . '/model/baru.model', true)
-	);
-	$estimator->train($folds[0]);
-	$estimator->partial($folds[1]);
-	$estimator->partial($folds[2]);
-	$estimator->partial($folds[3]);
-	$estimator->save();
-	// dump($estimator);
-	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
-	dd($prediction);
+        new Pipeline([
+            new WordCountVectorizer(),
+            new TfIdfTransformer(),
+        ], new GaussianNB()),
+        new Filesystem(storage_path() . '/model/ahay.model', true)
+    );
+
+	$estimator->train($training);
+
+	// $estimator->train($folds[0]);
+	// for ($i = 1; $i < count($folds); $i++) {
+	//     $estimator->partial($folds[$i]);
+	// }
+
+	dd($estimator);
+
+	$predictions = $estimator->predict($testing);
+
+	// $estimator->save();	
+	//Report    
+	$report = new AggregateReport([
+		new MulticlassBreakdown(),
+		new ConfusionMatrix(),
+	]);
+	$results = $report->generate($predictions, $testing->labels());	
+	dump($results);
 });
-
-Route::get('/cek2', function () {
-	$estimator = PersistentModel::load(new Filesystem(storage_path() . '/model/test.model'));
-	$prediction = $estimator->predictSample(['alhamdulillah negatif covid lanjut']);
-	dd($prediction);
-});
-
-Route::get('/upload', [UploadTrainingController::class, 'index'])->name('upload.training.view');
-Route::post('/upload', [UploadTrainingController::class, 'import'])->name('upload.training.create');
-
-Route::get('/text-mining', [TextMiningController::class, 'index']);
-Route::post('/text-mining', [TextMiningController::class, 'createModel'])->name('create.model');
 
 Auth::routes();
 
-Route::get('/home', 'App\Http\Controllers\HomeController@index')->name('home');
+// Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::group(['middleware' => 'auth'], function () {
 	Route::resource('user', 'App\Http\Controllers\UserController', ['except' => ['show']]);

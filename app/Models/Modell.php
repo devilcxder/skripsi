@@ -5,13 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Tweet extends Model
+class Modell extends Model
 {
-    public $timestamps = false;
     use HasFactory;
-
-    public function emotion()
-    {
-        return $this->hasOne(Emotion::class);
-    }
+    protected $fillable = ['model', 'split', 'accuracy'];
 }

@@ -14,7 +14,11 @@ class UploadTrainingController extends Controller
     }
 
     public function import()
-    {                
+    {
+        $validated = request()->validate([
+            'train' => 'required|mimes:xlsx,csv'
+        ]);        
         Excel::import(new TrainsImport, request()->file('train'));
+        return back()->with('status', 'Data Berhasil di Upload!');
     }
 }

@@ -22,13 +22,8 @@
 </head>
 
 <body class="{{ $class ?? '' }}">
-  <div class="wrapper">
-    @auth
-      @include('layouts.page_template.auth')
-    @endauth
-    @guest
-      @include('layouts.page_template.guest')
-    @endguest
+  <div class="wrapper">    
+      @include('layouts.page_template.auth')        
   </div>
   <!--   Core JS Files   -->
   <script src="{{ asset('assets') }}/js/core/jquery.min.js"></script>
